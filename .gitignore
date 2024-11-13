@@ -1,0 +1,42 @@
+# Каталоги сборки
+/build/
+/bin/
+/CMakeFiles/
+/CMakeCache.txt
+/CMakeInstall.cmake
+/DartConfiguration.tcl
+/Testing/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+.cache
+
+# Файлы IDE и текстовых редакторов
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.vscode/
+*.iml
+
+# Компилированные и промежуточные файлы
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.exe
+*.out
+*.app
+
+# Логи
+*.log
+
+# Загруженные библиотеки через git submodules
+external/
+
+# Файлы настроек пакетов (например, для CMake)
+Makefile
