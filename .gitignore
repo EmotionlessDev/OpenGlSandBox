@@ -40,3 +40,4 @@ external/
 
 # Файлы настроек пакетов (например, для CMake)
 Makefile
+.clang-format
