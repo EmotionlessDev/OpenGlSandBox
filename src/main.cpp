@@ -21,16 +21,16 @@ void processInput(GLFWwindow *pwindow) {
   }
 }
 
-float vertices[] = {
-    // координаты       // цвета
-    0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // нижняя правая вершина
-    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // нижняя левая вершина
-    0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f  // верхняя вершина
+GLfloat vertices[] = {
+    -0.5f, -0.5f, 0.0f, // bottom left
+     0.5f, -0.5f, 0.0f, // bottom right
+    -0.5f,  0.5f, 0.0f, // top left
+     0.5f,  0.5f, 0.0f  // top right
 };
 
-unsigned int indices[] = {
-    0, 1, 3, // первый треугольник
-    1, 2, 3  // второй треугольник
+GLuint indices[] = {
+    0, 1, 2, // первый треугольник
+    2, 1, 3  // второй треугольник
 };
 
 int main() {
@@ -69,32 +69,27 @@ int main() {
   Utils::VAO VAO1;
   VAO1.Bind();
   Utils::VBO VBO1(vertices, sizeof(vertices));
-  VAO1.LinkAttrib(VBO1, 0, 6 * sizeof(float), nullptr);
-  VAO1.LinkAttrib(VBO1, 1, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+  VBO1.Bind();
+  Utils::EBO EBO1(indices, sizeof(indices));
+  EBO1.Bind();
+  VAO1.LinkAttrib(VBO1, 0, 3 * sizeof(float), nullptr);
   VAO1.Unbind();
   VBO1.Unbind();
+  EBO1.Unbind();
   // render loop
   while (!glfwWindowShouldClose(pwindow)) {
     processInput(pwindow);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    // start drawing
 
-    float timeValue = glfwGetTime();
-    // float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-    float offset1 = 0.8f * cos(timeValue) / 2.0f;
-    float offset2 = 0.8f * sin(timeValue) / 2.0f;
-    float angle = 1.0f * timeValue;
     shaderProgram.use();
-    // shaderProgram.setFloat("ourColor", greenValue);
-    shaderProgram.setFloat("offset1", offset1);
-    shaderProgram.setFloat("offset2", offset2);
-    shaderProgram.setFloat("time", timeValue);
-    shaderProgram.setFloat("angle", angle);
-
     VAO1.Bind();
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    EBO1.Bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
+    // end drawing
     glfwSwapBuffers(pwindow);
     glfwPollEvents();
   }
