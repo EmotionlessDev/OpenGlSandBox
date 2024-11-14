@@ -23,6 +23,10 @@ public:
   void setInt(const std::string &name, int value) const;
   void setFloat(const std::string &name, float value) const;
 
+  void Delete();
+
+  ~Shader();
+
 private:
   // load shader source code from file
   std::string loadShaderSource(const std::string &filename);

@@ -5,6 +5,9 @@
 #include <fstream>
 #include <sstream>
 #include "Render/Shader.hpp"
+#include "utils/VAO.hpp"
+#include "utils/VBO.hpp"
+#include "utils/EBO.hpp"
 
 // callback function for window resizing
 void framebuffer_size_callback(GLFWwindow *pwindow, int width, int height) {
@@ -61,23 +64,15 @@ int main() {
   glfwSetFramebufferSizeCallback(pwindow, framebuffer_size_callback);
 
   // create a shader program
-  Render::Shader shaderProgram("../shaders/vertex.glsl", "../shaders/fragment.glsl");
-  // VAO1
-  unsigned int VAO1;
-  glGenVertexArrays(1, &VAO1);
-  glBindVertexArray(VAO1);
-  // VBO 1
-  unsigned int VBO1;
-  glGenBuffers(1, &VBO1);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  // coordinates
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
-  glEnableVertexAttribArray(0);
-  // colors
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+  Render::Shader shaderProgram("../shaders/vertex.glsl",
+                               "../shaders/fragment.glsl");
+  Utils::VAO VAO1;
+  VAO1.Bind();
+  Utils::VBO VBO1(vertices, sizeof(vertices));
+  VAO1.LinkAttrib(VBO1, 0, 6 * sizeof(float), nullptr);
+  VAO1.LinkAttrib(VBO1, 1, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+  VAO1.Unbind();
+  VBO1.Unbind();
   // render loop
   while (!glfwWindowShouldClose(pwindow)) {
     processInput(pwindow);
@@ -87,8 +82,8 @@ int main() {
 
     float timeValue = glfwGetTime();
     // float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-    float offset1 = 0.8f * cos(timeValue)/2.0f;
-    float offset2 = 0.8f * sin(timeValue)/2.0f;
+    float offset1 = 0.8f * cos(timeValue) / 2.0f;
+    float offset2 = 0.8f * sin(timeValue) / 2.0f;
     float angle = 1.0f * timeValue;
     shaderProgram.use();
     // shaderProgram.setFloat("ourColor", greenValue);
@@ -97,12 +92,15 @@ int main() {
     shaderProgram.setFloat("time", timeValue);
     shaderProgram.setFloat("angle", angle);
 
-    glBindVertexArray(VAO1);
+    VAO1.Bind();
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     glfwSwapBuffers(pwindow);
     glfwPollEvents();
   }
+  VAO1.Delete();
+  VBO1.Delete();
+  shaderProgram.Delete();
   glfwTerminate();
   return 0;
 }

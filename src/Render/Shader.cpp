@@ -30,6 +30,8 @@ Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
   glDeleteShader(fragment);
 }
 
+Shader::~Shader() {}
+
 std::string Shader::loadShaderSource(const std::string &filename) {
   std::ifstream file;
   try {
@@ -85,5 +87,7 @@ void Shader::setInt(const std::string &name, int value) const {
 void Shader::setFloat(const std::string &name, float value) const {
   glUniform1f(glGetUniformLocation(this->ID, name.c_str()), value);
 }
+
+void Shader::Delete() { glDeleteProgram(this->ID); }
 
 } // namespace Render
