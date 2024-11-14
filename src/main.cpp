@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include "Render/Shader.hpp"
 
 // callback function for window resizing
 void framebuffer_size_callback(GLFWwindow *pwindow, int width, int height) {
@@ -17,18 +18,6 @@ void processInput(GLFWwindow *pwindow) {
   }
 }
 
-// load shader source code from file
-std::string loadShaderSource(const std::string &filename) {
-  std::ifstream file(filename);
-  if (!file.is_open()) {
-    std::cout << "Failed to open file: " << filename << std::endl;
-    return "";
-  }
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
-}
-
 float vertices[] = {
     // координаты       // цвета
     0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // нижняя правая вершина
@@ -40,14 +29,6 @@ unsigned int indices[] = {
     0, 1, 3, // первый треугольник
     1, 2, 3  // второй треугольник
 };
-
-std::string vertexShaderSourceStr =
-    loadShaderSource("../shaders/vertex_shader.glsl");
-char const *vertexShaderSource = vertexShaderSourceStr.c_str();
-
-std::string fragmentShaderSourceStr =
-    loadShaderSource("../shaders/frag_shader.glsl");
-char const *fragmentShaderSource = fragmentShaderSourceStr.c_str();
 
 int main() {
   // initialize GLFW
@@ -79,47 +60,8 @@ int main() {
   }
   glfwSetFramebufferSizeCallback(pwindow, framebuffer_size_callback);
 
-  // init vertex shader
-  unsigned int vertexShader;
-  vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-  glCompileShader(vertexShader);
-  // check for shader compile errors
-  int success;
-  char infoLog[512];
-  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-  if (!success) {
-    glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-              << infoLog << std::endl;
-  }
-  // init fragment shader
-  unsigned int fragmentShader;
-  fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-  glCompileShader(fragmentShader);
-  // check for shader compile errors
-  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-  if (!success) {
-    glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-              << infoLog << std::endl;
-  }
-  unsigned int shaderProgram;
-  shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-  // check for linking errors
-  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-  if (!success) {
-    glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
-              << infoLog << std::endl;
-  }
-  // delete shaders
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
+  // create a shader program
+  Render::Shader shaderProgram("../shaders/vertex.glsl", "../shaders/fragment.glsl");
   // VAO1
   unsigned int VAO1;
   glGenVertexArrays(1, &VAO1);
@@ -145,9 +87,8 @@ int main() {
 
     float timeValue = glfwGetTime();
     float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-    int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-    glUseProgram(shaderProgram);
-    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+    shaderProgram.use();
+    shaderProgram.setFloat("ourColor", greenValue);
     glBindVertexArray(VAO1);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
