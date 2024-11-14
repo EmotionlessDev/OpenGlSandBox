@@ -86,9 +86,17 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     float timeValue = glfwGetTime();
-    float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+    // float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+    float offset1 = 0.8f * cos(timeValue)/2.0f;
+    float offset2 = 0.8f * sin(timeValue)/2.0f;
+    float angle = 1.0f * timeValue;
     shaderProgram.use();
-    shaderProgram.setFloat("ourColor", greenValue);
+    // shaderProgram.setFloat("ourColor", greenValue);
+    shaderProgram.setFloat("offset1", offset1);
+    shaderProgram.setFloat("offset2", offset2);
+    shaderProgram.setFloat("time", timeValue);
+    shaderProgram.setFloat("angle", angle);
+
     glBindVertexArray(VAO1);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
