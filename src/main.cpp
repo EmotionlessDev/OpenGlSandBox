@@ -8,6 +8,7 @@
 #include "utils/VAO.hpp"
 #include "utils/VBO.hpp"
 #include "utils/EBO.hpp"
+#include "../external/stb/stb_image.h"
 
 // callback function for window resizing
 void framebuffer_size_callback(GLFWwindow *pwindow, int width, int height) {
@@ -22,16 +23,18 @@ void processInput(GLFWwindow *pwindow) {
 }
 
 GLfloat vertices[] = {
-    -0.5f, -0.5f, 0.0f, // bottom left
-     0.5f, -0.5f, 0.0f, // bottom right
-    -0.5f,  0.5f, 0.0f, // top left
-     0.5f,  0.5f, 0.0f  // top right
+   // координаты      // текстурные координаты
+     0.5f,  0.5f, 0.0f, 1.0f, 1.0f,   // верхняя правая
+     0.5f, -0.5f, 0.0f, 1.0f, 0.0f,   // нижняя правая
+    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,   // нижняя левая
+    -0.5f,  0.5f, 0.0f, 0.0f, 1.0f    // верхняя левая 
 };
 
 GLuint indices[] = {
-    0, 1, 2, // первый треугольник
-    2, 1, 3  // второй треугольник
+  2, 1, 3,
+  1, 0, 3
 };
+
 
 int main() {
   // initialize GLFW
@@ -63,6 +66,28 @@ int main() {
   }
   glfwSetFramebufferSizeCallback(pwindow, framebuffer_size_callback);
 
+  // load textures
+  int width, height, nrChannels;
+  unsigned char *data =
+      stbi_load("../assets/bricks.jpg", &width, &height, &nrChannels, 0);
+  if (!data) {
+    std::cout << "Failed to load texture" << std::endl;
+    return -1;
+  }
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  stbi_image_free(data);
+
   // create a shader program
   Render::Shader shaderProgram("../shaders/vertex.glsl",
                                "../shaders/fragment.glsl");
@@ -72,23 +97,22 @@ int main() {
   VBO1.Bind();
   Utils::EBO EBO1(indices, sizeof(indices));
   EBO1.Bind();
-  VAO1.LinkAttrib(VBO1, 0, 3 * sizeof(float), nullptr);
+  VAO1.LinkAttrib(VBO1, 0, 5 * sizeof(float), nullptr);
+  VAO1.LinkAttrib(VBO1, 1, 5 * sizeof(float), (void *)(3 * sizeof(float)));
   VAO1.Unbind();
   VBO1.Unbind();
   EBO1.Unbind();
   // render loop
   while (!glfwWindowShouldClose(pwindow)) {
     processInput(pwindow);
-
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     // start drawing
-
     shaderProgram.use();
     VAO1.Bind();
     EBO1.Bind();
+    glBindTexture(GL_TEXTURE_2D, texture);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
     // end drawing
     glfwSwapBuffers(pwindow);
     glfwPollEvents();

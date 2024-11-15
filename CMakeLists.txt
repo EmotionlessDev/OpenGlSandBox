@@ -29,5 +29,13 @@ set(GLFW_INSTALL
 # add external libraries
 add_subdirectory(external/glfw)
 add_subdirectory(external/glad)
-target_link_libraries(${project_name} glfw Glad)
+
+# Добавляем stb_image как библиотеку и указываем путь к заголовкам
+add_library(stb_image STATIC external/stb/stb_image.cpp)
+target_include_directories(stb_image PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external/stb)
+
+# Подключаем все внешние библиотеки к проекту SandBox
+target_link_libraries(${project_name} PRIVATE glfw Glad stb_image)
+
+# Добавляем директории заголовков
 target_include_directories(${project_name} PRIVATE external/glad/include)
