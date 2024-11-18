@@ -8,6 +8,7 @@
 #include "utils/VAO.hpp"
 #include "utils/VBO.hpp"
 #include "utils/EBO.hpp"
+#include "utils/Texture.hpp"
 #include "../external/stb/stb_image.h"
 
 // callback function for window resizing
@@ -23,18 +24,14 @@ void processInput(GLFWwindow *pwindow) {
 }
 
 GLfloat vertices[] = {
-   // координаты      // текстурные координаты
-     0.5f,  0.5f, 0.0f, 1.0f, 1.0f,   // верхняя правая
-     0.5f, -0.5f, 0.0f, 1.0f, 0.0f,   // нижняя правая
-    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,   // нижняя левая
-    -0.5f,  0.5f, 0.0f, 0.0f, 1.0f    // верхняя левая 
+    // координаты      // текстурные координаты
+    0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // верхняя правая
+    0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, // нижняя правая
+    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // нижняя левая
+    -0.5f, 0.5f,  0.0f, 0.0f, 1.0f  // верхняя левая
 };
 
-GLuint indices[] = {
-  2, 1, 3,
-  1, 0, 3
-};
-
+GLuint indices[] = {2, 1, 3, 1, 0, 3};
 
 int main() {
   // initialize GLFW
@@ -66,31 +63,12 @@ int main() {
   }
   glfwSetFramebufferSizeCallback(pwindow, framebuffer_size_callback);
 
-  // load textures
-  int width, height, nrChannels;
-  unsigned char *data =
-      stbi_load("../assets/bricks.jpg", &width, &height, &nrChannels, 0);
-  if (!data) {
-    std::cout << "Failed to load texture" << std::endl;
-    return -1;
-  }
-  GLuint texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-               GL_UNSIGNED_BYTE, data);
-  glGenerateMipmap(GL_TEXTURE_2D);
-  stbi_image_free(data);
-
   // create a shader program
   Render::Shader shaderProgram("../shaders/vertex.glsl",
                                "../shaders/fragment.glsl");
+  Utils::Texture texture("../assets/pop_cat.png", GL_TEXTURE_2D, GL_TEXTURE0,
+                         GL_RGBA, GL_UNSIGNED_BYTE);
+  texture.texUnit(shaderProgram, "ourTexture", 0);
   Utils::VAO VAO1;
   VAO1.Bind();
   Utils::VBO VBO1(vertices, sizeof(vertices));
@@ -111,7 +89,16 @@ int main() {
     shaderProgram.use();
     VAO1.Bind();
     EBO1.Bind();
-    glBindTexture(GL_TEXTURE_2D, texture);
+    texture.Bind();
+
+    float timeValue = glfwGetTime();
+    float offset1 = 0.8f * cos(timeValue) / 2.0f;
+    float offset2 = (0.8f * sin(timeValue) / 2.0f) / 2.0f;
+    float angle = 1.0f * timeValue;
+    shaderProgram.setFloat("offset1", offset1);
+    shaderProgram.setFloat("offset2", offset2);
+    shaderProgram.setFloat("time", timeValue);
+    shaderProgram.setFloat("angle", angle);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
     // end drawing
     glfwSwapBuffers(pwindow);
@@ -119,6 +106,8 @@ int main() {
   }
   VAO1.Delete();
   VBO1.Delete();
+  EBO1.Delete();
+  texture.Delete();
   shaderProgram.Delete();
   glfwTerminate();
   return 0;

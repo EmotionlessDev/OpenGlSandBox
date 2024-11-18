@@ -48,6 +48,8 @@ std::string Shader::loadShaderSource(const std::string &filename) {
   return buffer.str();
 }
 
+GLuint Shader::getID() const { return this->ID; }
+
 void Shader::checkCompileErrors(GLuint shader, GLenum type) {
   GLint success;
   GLchar infoLog[1024];

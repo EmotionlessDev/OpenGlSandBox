@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
 set(CMAKE_BUILD_TYPE Debug)
 add_executable(
   ${project_name} src/main.cpp src/Render/Shader.cpp src/utils/VAO.cpp
-                  src/utils/VBO.cpp src/utils/EBO.cpp)
+                  src/utils/VBO.cpp src/utils/EBO.cpp src/utils/Texture.cpp)
 
 # settings for glfw
 set(GLFW_BUILD_DOCS
