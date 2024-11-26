@@ -4,6 +4,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include "../external/glm/glm.hpp"
+#include "../external/glm/gtc/matrix_transform.hpp"
+#include "../external/glm/gtc/type_ptr.hpp"
 #include "Render/Shader.hpp"
 #include "utils/VAO.hpp"
 #include "utils/VBO.hpp"
@@ -24,14 +27,63 @@ void processInput(GLFWwindow *pwindow) {
 }
 
 GLfloat vertices[] = {
-    // координаты      // текстурные координаты
-    0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // верхняя правая
-    0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, // нижняя правая
-    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // нижняя левая
-    -0.5f, 0.5f,  0.0f, 0.0f, 1.0f  // верхняя левая
+    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+    0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, //
+    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+
+    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+    0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+    -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
+    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+
+    -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+    -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
+    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+    -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+    0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+
+    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+    0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
+    0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+    0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+
+    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+    -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, //
+    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f  //
 };
 
-GLuint indices[] = {2, 1, 3, 1, 0, 3};
+GLuint indices[] = {
+    0, 1, 3, // первый треугольник
+    1, 2, 3  // второй треугольник
+};
+
+glm::vec3 cubePositions[] = {
+    glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+    glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+    glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
+
+const int WIDTH = 800;
+const int HEIGHT = 600;
 
 int main() {
   // initialize GLFW
@@ -48,7 +100,8 @@ int main() {
 #endif
 
   // create a windowed mode window and its OpenGL context
-  GLFWwindow *pwindow = glfwCreateWindow(800, 600, "SandBox", nullptr, nullptr);
+  GLFWwindow *pwindow =
+      glfwCreateWindow(WIDTH, HEIGHT, "SandBox", nullptr, nullptr);
   if (!pwindow) {
     std::cout << "glfwCreateWindow failed" << std::endl;
     glfwTerminate();
@@ -66,8 +119,8 @@ int main() {
   // create a shader program
   Render::Shader shaderProgram("../shaders/vertex.glsl",
                                "../shaders/fragment.glsl");
-  Utils::Texture texture("../assets/pop_cat.png", GL_TEXTURE_2D, GL_TEXTURE0,
-                         GL_RGBA, GL_UNSIGNED_BYTE);
+  Utils::Texture texture("../assets/wooden_container.jpg", GL_TEXTURE_2D,
+                         GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE);
   texture.texUnit(shaderProgram, "ourTexture", 0);
   Utils::VAO VAO1;
   VAO1.Bind();
@@ -75,31 +128,49 @@ int main() {
   VBO1.Bind();
   Utils::EBO EBO1(indices, sizeof(indices));
   EBO1.Bind();
-  VAO1.LinkAttrib(VBO1, 0, 5 * sizeof(float), nullptr);
-  VAO1.LinkAttrib(VBO1, 1, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+  VAO1.LinkAttrib(VBO1, 0, 3, 5 * sizeof(float), (void *)0);
+  VAO1.LinkAttrib(VBO1, 1, 2, 5 * sizeof(float), (void *)(3 * sizeof(float)));
   VAO1.Unbind();
   VBO1.Unbind();
   EBO1.Unbind();
+
+  // enable depth testing
+  glEnable(GL_DEPTH_TEST);
   // render loop
   while (!glfwWindowShouldClose(pwindow)) {
     processInput(pwindow);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // start drawing
     shaderProgram.use();
     VAO1.Bind();
-    EBO1.Bind();
     texture.Bind();
 
-    float timeValue = glfwGetTime();
-    float offset1 = 0.8f * cos(timeValue) / 2.0f;
-    float offset2 = (0.8f * sin(timeValue) / 2.0f) / 2.0f;
-    float angle = 1.0f * timeValue;
-    shaderProgram.setFloat("offset1", offset1);
-    shaderProgram.setFloat("offset2", offset2);
-    shaderProgram.setFloat("time", timeValue);
-    shaderProgram.setFloat("angle", angle);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    for (int i = 0; i < 10; i++) {
+      glm::mat4 modelMatrix = glm::mat4(1.0f); // init model matrix
+      modelMatrix = glm::translate(modelMatrix,
+                                   cubePositions[i]); // translate model matrix
+      GLfloat angle = 20.0f * (i + 1);
+      if (i % 3 == 0) {
+        angle = static_cast<GLfloat>(glfwGetTime() * glm::radians(angle));
+      }
+      modelMatrix =
+          glm::rotate(modelMatrix, angle,
+                      glm::vec3(1.0f, 0.3f, 0.5f)); // rotate model matrix
+      shaderProgram.setMat4("modelMatrix", modelMatrix);
+      glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    glm::mat4 viewMatrix = glm::mat4(1.0f); // init view matrix
+    viewMatrix =
+        glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f,
+                                             -3.0f)); // translate view matrix
+    glm::mat4 projectionMatrix = glm::mat4(1.0f);     // init projection matrix
+    projectionMatrix =
+        glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / HEIGHT, 0.1f,
+                         100.0f); // set projection
+    shaderProgram.setMat4("viewMatrix", viewMatrix);
+    shaderProgram.setMat4("projectionMatrix", projectionMatrix);
+
     // end drawing
     glfwSwapBuffers(pwindow);
     glfwPollEvents();
