@@ -13,71 +13,23 @@
 #include "utils/EBO.hpp"
 #include "utils/Texture.hpp"
 #include "../external/stb/stb_image.h"
+#include "Render/Camera.hpp"
 
 // constants
-GLfloat deltaTime = 0.0f;
-GLfloat lastFrame = 0.0f;
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
-GLfloat lastX = static_cast<GLfloat>(WIDTH) / 2,
-        lastY = static_cast<GLfloat>(HEIGHT) / 2;
-GLfloat yaw = -90.0f, pitch = 0.0f;
-GLboolean firstMouse = true;
 // callback function for window resizing
 void framebuffer_size_callback(GLFWwindow *pwindow, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
 // quit the application when ESC is pressed
-void processInput(GLFWwindow *pwindow, glm::vec3 &cameraPos,
-                  glm::vec3 &cameraFront, glm::vec3 &cameraUp) {
+void processInput(GLFWwindow *pwindow) {
   if (glfwGetKey(pwindow, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(pwindow, true);
   }
-  const GLfloat cameraSpeed = 2.5f * deltaTime;
-  if (glfwGetKey(pwindow, GLFW_KEY_W) == GLFW_PRESS) {
-    std::cout << "W key is pressed" << std::endl;
-    cameraPos += cameraSpeed * cameraFront;
-  }
-  if (glfwGetKey(pwindow, GLFW_KEY_S) == GLFW_PRESS) {
-    std::cout << "S key is pressed" << std::endl;
-    cameraPos -= cameraSpeed * cameraFront;
-  }
-  if (glfwGetKey(pwindow, GLFW_KEY_A) == GLFW_PRESS) {
-    std::cout << "A key is pressed" << std::endl;
-    cameraPos -=
-        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-  }
-  if (glfwGetKey(pwindow, GLFW_KEY_D) == GLFW_PRESS) {
-    std::cout << "D key is pressed" << std::endl;
-    cameraPos +=
-        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-  }
 }
 
-// mouse callback function
-void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-  if (firstMouse) {
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
-  GLfloat xoffset = xpos - lastX;
-  GLfloat yoffset = lastY - ypos;
-  lastX = xpos;
-  lastY = ypos;
-  GLfloat sensitivity = 0.05f;
-  xoffset *= sensitivity;
-  yoffset *= sensitivity;
-  yaw += xoffset;
-  pitch += yoffset;
-  if (pitch > 89.0f) {
-    pitch = 89.0f;
-  }
-  if (pitch < -89.0f) {
-    pitch = -89.0f;
-  }
-}
 
 GLfloat vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
@@ -183,32 +135,22 @@ int main() {
   VAO1.Unbind();
   VBO1.Unbind();
   EBO1.Unbind();
-  // camera settings
-  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-  glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-  glm::vec3 cameraDirection =
-      glm::normalize(cameraPos - cameraTarget); // camera direction
-  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);   // up vector
-  glm::vec3 cameraRight =
-      glm::normalize(glm::cross(up, cameraDirection)); // camera right vector
-  glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight); // camera up
-  glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);          // camera front
-  // catch mouse events
-  glfwSetInputMode(pwindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  glfwSetCursorPosCallback(pwindow, mouse_callback);
+  // set up camera
+  Render::Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
+                        glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f),
+                        WIDTH, HEIGHT, 0.05f);
   // enable depth testing
   glEnable(GL_DEPTH_TEST);
   // render loop
-
   while (!glfwWindowShouldClose(pwindow)) {
-    processInput(pwindow, cameraPos, cameraFront, cameraUp);
+    processInput(pwindow);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // start drawing
     shaderProgram.use();
     VAO1.Bind();
     texture.Bind();
-
+    
     for (int i = 0; i < 10; i++) {
       glm::mat4 modelMatrix = glm::mat4(1.0f); // init model matrix
       modelMatrix = glm::translate(modelMatrix,
@@ -223,26 +165,8 @@ int main() {
       shaderProgram.setMat4("modelMatrix", modelMatrix);
       glDrawArrays(GL_TRIANGLES, 0, 36);
     }
-
-    glm::mat4 viewMatrix = glm::mat4(1.0f); // init view matrix
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
-    viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-    glm::mat4 projectionMatrix = glm::mat4(1.0f); // init projection matrix
-    projectionMatrix =
-        glm::perspective(glm::radians(45.0f), (GLfloat)WIDTH / HEIGHT, 0.1f,
-                         100.0f); // set projection
-    shaderProgram.setMat4("viewMatrix", viewMatrix);
-    shaderProgram.setMat4("projectionMatrix", projectionMatrix);
-
-
-    GLfloat currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
+    camera.ProcessInput(pwindow); // catch inputs
+    camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram.getID(), "cameraMatrix"); // set camera matrix
     // end drawing
     glfwSwapBuffers(pwindow);
     glfwPollEvents();
