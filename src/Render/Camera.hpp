@@ -28,6 +28,7 @@ public:
   Camera(glm::vec3 cameraPos, glm::vec3 cameraFront, glm::vec3 cameraUp, GLint width, GLint height, GLfloat cameraSpeed);
   void Matrix(GLfloat fov, GLfloat nearPlane, GLfloat farPlane, GLuint shaderProgram, const char *uniform);
   void ProcessInput(GLFWwindow *pwindow);
+  glm::mat4 getLookAt(glm::vec3 position, glm::vec3 target, glm::vec3 worldUp);
 };
 
 } // namespace Render

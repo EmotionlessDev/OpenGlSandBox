@@ -95,6 +95,10 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const {
                      glm::value_ptr(mat));
 }
 
+void Shader::setVec3(const std::string &name, const glm::vec3 &vec) const {
+  glUniform3fv(glGetUniformLocation(this->ID, name.c_str()), 1, glm::value_ptr(vec));
+}
+
 void Shader::Delete() { glDeleteProgram(this->ID); }
 
 } // namespace Render

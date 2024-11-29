@@ -31,6 +31,8 @@ void processInput(GLFWwindow *pwindow) {
 }
 
 
+
+
 GLfloat vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
     0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, //
@@ -121,6 +123,8 @@ int main() {
   // create a shader program
   Render::Shader shaderProgram("../shaders/vertex.glsl",
                                "../shaders/fragment.glsl");
+  Render::Shader shaderProgramLight("../shaders/vertex_light.glsl",
+                               "../shaders/fragment_light.glsl");
   Utils::Texture texture("../assets/wooden_container.jpg", GL_TEXTURE_2D,
                          GL_TEXTURE0, GL_RGB, GL_UNSIGNED_BYTE);
   texture.texUnit(shaderProgram, "ourTexture", 0);
@@ -139,6 +143,13 @@ int main() {
   Render::Camera camera(glm::vec3(0.0f, 0.0f, 3.0f),
                         glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f),
                         WIDTH, HEIGHT, 0.05f);
+  // Light
+  Utils::VAO lightVAO;
+  lightVAO.Bind();
+  VBO1.Bind();
+  lightVAO.LinkAttrib(VBO1, 0, 3, 5 * sizeof(float), (void *)0);
+  lightVAO.Unbind();
+  VBO1.Unbind();
   // enable depth testing
   glEnable(GL_DEPTH_TEST);
   // render loop
@@ -149,9 +160,10 @@ int main() {
     // start drawing
     shaderProgram.use();
     VAO1.Bind();
-    texture.Bind();
-    
-    for (int i = 0; i < 10; i++) {
+    // texture.Bind();
+    shaderProgram.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+    shaderProgram.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    for (int i = 0; i < 1; i++) {
       glm::mat4 modelMatrix = glm::mat4(1.0f); // init model matrix
       modelMatrix = glm::translate(modelMatrix,
                                    cubePositions[i]); // translate model matrix
@@ -167,15 +179,26 @@ int main() {
     }
     camera.ProcessInput(pwindow); // catch inputs
     camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram.getID(), "cameraMatrix"); // set camera matrix
+    // light
+    shaderProgramLight.use();
+    lightVAO.Bind();
+    camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgramLight.getID(), "cameraMatrix");
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(1.2f, 1.0f, 2.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
+    shaderProgramLight.setMat4("modelMatrix", modelMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
     // end drawing
     glfwSwapBuffers(pwindow);
     glfwPollEvents();
   }
   VAO1.Delete();
+  lightVAO.Delete();
   VBO1.Delete();
   EBO1.Delete();
   texture.Delete();
   shaderProgram.Delete();
+  shaderProgramLight.Delete();
   glfwTerminate();
   return 0;
 }
